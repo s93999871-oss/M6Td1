@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест-драйв — ролевая игра с нейросетью</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+[hidden]{ display:none !important; }
+
+:root{
+  --card:#F6F6F6;
+  --ink:#1A0A0F;
+  --muted:#808080;
+  --line:#B0B0B0;
+  --accent:#E30613;
+  --accent-dark:#C00510;
+  --teal:#2E8B8F;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:#FFFFFF; }
+body{
+  font-family:"Montserrat",system-ui,sans-serif;
+  font-size:16px; line-height:1.5; color:var(--ink);
+  padding:24px;
+}
+.wrap{ max-width:860px; margin:0 auto; }
+
+/* шапка */
+.td__head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap; margin:0 0 12px;
+}
+.td__overline{
+  margin:0; font-weight:800; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
+.rdot{
+  display:inline-block; width:6px; height:6px; border-radius:50%;
+  background:var(--accent); margin-left:8px; vertical-align:middle;
+}
+.td__time{ font-size:13px; color:var(--muted); }
+
+.td__title{
+  font-weight:800; font-size:clamp(20px,3vw,26px);
+  line-height:1.35; margin:0 0 10px;
+}
+.td__lead{ margin:0 0 20px; max-width:72ch; }
+
+/* ============ ПЕРЕКЛЮЧАТЕЛЬ УРОВНЕЙ ============ */
+.td__tabs{ display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px; }
+.td__tab{
+  padding:13px 26px; border-radius:12px; cursor:pointer;
+  border:1px solid var(--line); background:#FFFFFF; color:var(--muted);
+  font:700 14px "Montserrat",system-ui,sans-serif;
+  transition:background .24s, color .24s, border-color .24s;
+}
+.td__tab:hover{ border-color:var(--accent); color:var(--accent); }
+.td__tab[aria-selected="true"]{
+  background:var(--accent); border-color:var(--accent); color:#FFFFFF;
+}
+.td__tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* заглушка «выбери уровень» */
+.td__choice{
+  background:var(--card); border-radius:16px;
+  padding:clamp(20px,3.5vw,28px) clamp(18px,3.5vw,32px);
+  color:var(--muted); max-width:72ch;
+}
+
+/* панели уровней */
+.td__panel-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap; margin:0 0 12px;
+}
+.td__panel-title{
+  margin:0; font-weight:800; font-size:clamp(18px,2.6vw,22px);
+}
+.td__panel-time{ font-size:13px; color:var(--muted); font-weight:700; white-space:nowrap; }
+.td__panel-lead{ margin:0 0 16px; max-width:72ch; }
+
+/* сюжет */
+.td__plot{
+  background:#FFFFFF; border:1px solid var(--line); border-radius:16px;
+  padding:16px 20px; margin:0 0 16px; max-width:72ch;
+}
+.td__plot-label{
+  margin:0 0 8px; font-weight:800; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
+.td__plot p{ margin:0; }
+
+/* промпт в рамке + копирование */
+.td__letter{
+  background:#FFFFFF; border:1px solid var(--line); border-radius:16px;
+  padding:clamp(18px,3.5vw,28px) clamp(18px,3.5vw,32px);
+  margin:0 0 16px;
+}
+.td__letter-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; margin:0 0 12px;
+}
+.td__letter-label{
+  margin:0; font-weight:800; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
+.td__copy{
+  flex:none; background:none; border:0; cursor:pointer; padding:2px 0;
+  font:700 13px "Montserrat",system-ui,sans-serif; color:var(--accent);
+  transition:color .2s; white-space:nowrap;
+}
+.td__copy:hover{ color:var(--accent-dark); }
+.td__copy.is-done{ color:var(--muted); }
+.td__copy:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+.td__prompt-text{ margin:0; white-space:pre-line; }
+
+/* подсказки */
+.td__notecard{
+  background:#FFFFFF; border:1px solid var(--line); border-radius:16px;
+  padding:16px 20px; margin:0 0 16px; max-width:72ch;
+}
+.td__notecard--sec{ border-left:3px solid var(--teal); }
+
+/* шаги про-уровня */
+.td__steps{
+  background:var(--card); border-radius:16px;
+  padding:clamp(18px,3.5vw,28px) clamp(18px,3.5vw,32px);
+  list-style:none; margin:0 0 16px;
+}
+.td__step{
+  display:grid; grid-template-columns:auto 1fr;
+  gap:14px; align-items:start; padding:14px 6px;
+}
+.td__step + .td__step{ border-top:1px solid var(--line); }
+.td__step-num{
+  font-weight:800; font-size:13px; letter-spacing:.08em;
+  color:var(--muted); padding-top:3px; white-space:nowrap;
+}
+.td__step-text{ margin:0; max-width:66ch; }
+
+/* отметка: кнопка → штамп */
+.td__mark{ margin-top:28px; }
+.td__btn{
+  font:700 16px "Montserrat",system-ui,sans-serif;
+  padding:15px 32px; border:0; border-radius:12px; cursor:pointer;
+  background:var(--accent); color:#FFFFFF;
+  transition:background .24s;
+}
+.td__btn:hover{ background:var(--accent-dark); }
+.td__btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+.td__stamp{
+  display:inline-block;
+  padding:12px 28px;
+  border:2px solid var(--accent); border-radius:10px;
+  color:var(--accent);
+  font-weight:800; font-size:20px;
+  letter-spacing:.18em; text-transform:uppercase;
+  transform:rotate(-4deg);
+  animation:stampIn .3s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes stampIn{
+  from{ opacity:0; transform:rotate(-4deg) scale(1.6); }
+  to  { opacity:1; transform:rotate(-4deg) scale(1); }
+}
+
+.td__panel-appear{ animation:panelIn 250ms ease both; }
+@keyframes panelIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+
+@media (max-width:560px){ body{ padding:16px; } .td__tab{ flex:1; } }
+@media (prefers-reduced-motion:reduce){
+  *{ animation:none !important; transition:none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="td__head">
+    <p class="td__overline">Тест-драйв<span class="rdot" aria-hidden="true"></span></p>
+    <span class="td__time">≈ 15 минут</span>
+  </div>
+
+  <h2 class="td__title">Тренажер сложного разговора</h2>
+  <p class="td__lead">Выбери уровень: Kайт — готовый кейс с промптом, PRO — собственный симулятор
+    под ndjq разговор. Передумать и переключиться можно в любой момент.</p>
+
+  <!-- переключатель -->
+  <div class="td__tabs" role="tablist" aria-label="Уровень тест-драйва">
+    <button class="td__tab" id="tabLight" role="tab" aria-selected="false" aria-controls="panelLight" type="button">Уровень Лайт</button>
+    <button class="td__tab" id="tabPro" role="tab" aria-selected="false" aria-controls="panelPro" type="button">Уровень Pro </button>
+  </div>
+
+  <!-- заглушка до выбора -->
+  <p class="td__choice" id="tdChoice">Лайт — скопируй промпт и сразу проверь нейросеть в деле на готовой ситуации.
+    Prо — собери свой промт под разговор, который тебе интересно проиграть.</p>
+
+  <!-- ============ УРОВЕНЬ ЛАЙТ ============ -->
+  <section class="td__panel" id="panelLight" role="tabpanel" aria-labelledby="tabLight" hidden>
+    <div class="td__panel-head">
+      <p class="td__panel-title">Быстрый уровень: попробуй инструмент прямо сейчас</p>
+      <span class="td__panel-time">10 минут</span>
+    </div>
+    <p class="td__panel-lead">Вот готовая ситуация — скопируй промпт и сразу играй.</p>
+
+    <div class="td__plot">
+      <p class="td__plot-label">Сюжет<span class="rdot" aria-hidden="true"></span></p>
+      <p>Коллега из смежного отдела в третий раз допускает одну и ту же ошибку в CRM — не заполняет
+        обязательное поле «источник заявки», из-за чего твой отдел потом не может свести отчёт.
+        Завтра ты идёшь к нему с разговором. Отработай тренажер через технику Я-высказывания:
+        факт → чувства → потребность → просьба.</p>
+    </div>
+
+    <div class="td__letter">
+      <div class="td__letter-head">
+        <p class="td__letter-label">Промпт: ролевая игра<span class="rdot" aria-hidden="true"></span></p>
+        <button class="td__copy" type="button" data-target="promptText1">Скопировать</button>
+      </div>
+      <p class="td__prompt-text" id="promptText1">Давай проведём ролевую игру.
+ТЫ ИГРАЕШЬ РОЛЬ: Дмитрий, менеджер смежного отдела, с которым у меня общие процессы в CRM.
+ТВОЙ ПРОФИЛЬ:
+— 28 лет, перегружен, закрывает по 15 сделок в день
+— Это третий разговор на тему одного и того же поля в CRM за месяц
+— Скрытый страх: что ему «в очередной раз будут выговаривать за мелочи»
+— Козырь: «у меня реальные продажи, а не бумажная работа»
+— Стиль общения: защищается, если чувствует обвинения; оттаивает, когда разговор начинается спокойно и по делу
+ПРАВИЛА ИГРЫ:
+Я начинаю разговор как коллега из смежного отдела
+Ты отвечаешь ТОЛЬКО как Дмитрий
+Не подсказывай мне, не выходи из роли
+Реагируй по методике Я-высказываний: если я начинаю с «ты-обвинения» («ты опять не заполнил», «ты вечно забываешь») — уходи в защиту и обесценивай. Если я начинаю с Я-высказывания (факт без оценки + мои чувства + моя потребность + конкретная просьба) — слушай и ищи решение вместе
+После 5–7 моих реплик выйди из роли и дай обратную связь: какие мои фразы были Я-высказаниями, а какие — скрытыми обвинениями. Что усилить
+Начинаем. Ты сидишь за своим столом, я подошёл и сказал: «Дим, есть минутка?». Жду твою реплику.</p>
+    </div>
+
+  </section>
+
+  <!-- ============ УРОВЕНЬ ПРО ============ -->
+  <section class="td__panel" id="panelPro" role="tabpanel" aria-labelledby="tabPro" hidden>
+    <div class="td__panel-head">
+      <p class="td__panel-title">Продвинутый уровень: свой симулятор</p>
+      <span class="td__panel-time">ещё 10 минут</span>
+    </div>
+    <p class="td__panel-lead">Собери свой промпт — под тренажер. Возьми черновик промпта из раздела выше и заполни
+      четыре блока:</p>
+
+    <ol class="td__steps">
+      <li class="td__step">
+        <span class="td__step-num">01<span class="rdot" aria-hidden="true"></span></span>
+        <p class="td__step-text"><b>Роль</b> — с кем разговор.</p>
+      </li>
+      <li class="td__step">
+        <span class="td__step-num">02<span class="rdot" aria-hidden="true"></span></span>
+        <p class="td__step-text"><b>Профиль</b> — характер, ситуация, скрытый страх, козырь.</p>
+      </li>
+      <li class="td__step">
+        <span class="td__step-num">03<span class="rdot" aria-hidden="true"></span></span>
+        <p class="td__step-text"><b>Правила</b> — в том числе: что считать сильным ходом с твоей
+          стороны, а что — провалом (по твоей методике или модели).</p>
+      </li>
+      <li class="td__step">
+        <span class="td__step-num">04<span class="rdot" aria-hidden="true"></span></span>
+        <p class="td__step-text"><b>Обратная связь</b> — когда выходим из роли и что разбираем.</p>
+      </li>
+    </ol>
+
+    <p class="td__notecard td__notecard--sec"><b>Помни про правила информационной безопасности:</b> реальные имена и цифры клиентов
+      меняем на выдуманные.</p>
+  </section>
+
+  <!-- отметка: появляется после выбора уровня -->
+  <div class="td__mark" id="markWrap" hidden>
+    <button class="td__btn" id="doneBtn" type="button">Я попробовал(а)</button>
+    <span class="td__stamp" id="stamp" role="status" hidden>Сделано</span>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var tabLight = document.getElementById('tabLight');
+  var tabPro   = document.getElementById('tabPro');
+  var choice   = document.getElementById('tdChoice');
+  var panelLight = document.getElementById('panelLight');
+  var panelPro   = document.getElementById('panelPro');
+  var markWrap = document.getElementById('markWrap');
+  var doneBtn  = document.getElementById('doneBtn');
+  var stamp    = document.getElementById('stamp');
+  var reduced  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function showPanel(tab, panel, otherTab, otherPanel){
+    tab.setAttribute('aria-selected', 'true');
+    otherTab.setAttribute('aria-selected', 'false');
+    otherPanel.hidden = true;
+    choice.hidden = true;
+    markWrap.hidden = false;
+    panel.hidden = false;
+    if (!reduced){
+      panel.classList.add('td__panel-appear');
+      panel.addEventListener('animationend', function(){
+        panel.classList.remove('td__panel-appear');
+      }, { once:true });
+    }
+  }
+
+  tabLight.addEventListener('click', function(){
+    showPanel(tabLight, panelLight, tabPro, panelPro);
+  });
+  tabPro.addEventListener('click', function(){
+    showPanel(tabPro, panelPro, tabLight, panelLight);
+  });
+
+  /* штамп только после клика */
+  doneBtn.addEventListener('click', function(){
+    doneBtn.hidden = true;
+    stamp.hidden = false;
+  });
+
+  /* копирование промпта (с фолбэком для iframe) */
+  function copyDone(btn, ok){
+    btn.textContent = ok ? 'Скопировано ✓' : 'Не скопировалось';
+    btn.classList.toggle('is-done', ok);
+    setTimeout(function(){
+      btn.textContent = 'Скопировать';
+      btn.classList.remove('is-done');
+    }, 1600);
+  }
+  function fallbackCopy(btn, text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    copyDone(btn, ok);
+  }
+  document.querySelectorAll('.td__copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var src = document.getElementById(btn.getAttribute('data-target'));
+      var text = src.textContent.trim();
+      if (navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text)
+          .then(function(){ copyDone(btn, true); }, function(){ fallbackCopy(btn, text); });
+      } else {
+        fallbackCopy(btn, text);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
